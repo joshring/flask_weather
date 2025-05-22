@@ -1,11 +1,9 @@
 from flask import Blueprint, abort, Response
 from flask_pydantic import validate
-from werkzeug.exceptions import HTTPException
 from http import HTTPStatus
 
 bp = Blueprint("weather", __name__)
 
-from .models.city import City
 from .models.weather import (
     AddCityWeatherReq,
     AddCityWeatherResp,
