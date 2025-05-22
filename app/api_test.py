@@ -122,6 +122,8 @@ def test_delete_weather(client):
     response = client.delete("/weather/london")
     assert response.status_code == HTTPStatus.NOT_FOUND
 
+    # ======================================
+    # add required data
     body = {
         "city_name": "manchester",
         "temperature": 22,
@@ -158,6 +160,8 @@ def test_update_weather(client):
     assert response.status_code == 200
     assert response.json == body
 
+    # ======================================
+    # valid update
     body_updated = {
         "city_name": "manchester",
         "temperature": 28,
@@ -199,3 +203,86 @@ def test_update_weather(client):
 
     response = client.put("/weather/london", json=body_no_city)
     assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+def test_update_weather_invalid(client):
+    """
+    adding data, then check we can update it
+    """
+
+    body = {
+        "city_name": "manchester",
+        "temperature": 22,
+        "condition": "sunny",
+        "timestamp": "2025-12-20T10:00:00Z",
+    }
+
+    response = client.post("/weather", json=body)
+    assert response.status_code == 200
+    assert response.json == body
+
+    # ======================================
+    # invalid update - temp too high
+    body_updated = {
+        "city_name": "manchester",
+        "temperature": 99,
+        "condition": "sunny",
+        "timestamp": "2025-12-20T10:00:00Z",
+    }
+
+    response = client.put("/weather/manchester", json=body_updated)
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+
+    expected_error = {
+        "validation_error": {
+            "body_params": [
+                {
+                    "ctx": {
+                        "lt": 70.0,
+                    },
+                    "input": 99,
+                    "loc": [
+                        "temperature",
+                    ],
+                    "msg": "Input should be less than 70",
+                    "type": "less_than",
+                    "url": "https://errors.pydantic.dev/2.11/v/less_than",
+                },
+            ],
+        }
+    }
+
+    assert response.json == expected_error
+
+    # ======================================
+    # invalid update - invalid condition
+    body_updated = {
+        "city_name": "manchester",
+        "temperature": 24,
+        "condition": "manchester sunshine",
+        "timestamp": "2025-12-20T10:00:00Z",
+    }
+
+    response = client.put("/weather/manchester", json=body_updated)
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+
+    expected_error = {
+        "validation_error": {
+            "body_params": [
+                {
+                    "ctx": {
+                        "expected": "'sunny', 'cloudy', 'rainy', 'snowing', 'hailing' or 'storm'",
+                    },
+                    "input": "manchester sunshine",
+                    "loc": [
+                        "condition",
+                    ],
+                    "msg": "Input should be 'sunny', 'cloudy', 'rainy', 'snowing', 'hailing' or 'storm'",
+                    "type": "enum",
+                    "url": "https://errors.pydantic.dev/2.11/v/enum",
+                },
+            ],
+        }
+    }
+
+    assert response.json == expected_error
