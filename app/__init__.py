@@ -1,6 +1,5 @@
 from flask import Flask, json
 from werkzeug.exceptions import HTTPException
-from flask import Blueprint
 
 
 def create_app() -> Flask:
