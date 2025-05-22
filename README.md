@@ -15,3 +15,6 @@ pytest
 ```bash
 flask run
 ```
+
+## If I had more time
+- Add more tests for the model validations
